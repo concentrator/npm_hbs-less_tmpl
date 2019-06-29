@@ -1,5 +1,9 @@
 {
-    "index": {
-      "title": "Hello world"
-   }
+  "index": {
+    "title": "Hello world"
+  },
+
+  "page": {
+    "title": "Hello page"
+  }
 }

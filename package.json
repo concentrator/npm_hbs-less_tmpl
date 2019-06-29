@@ -1,13 +1,25 @@
 {
   "name": "npm_hbs-less",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "",
   "main": "index.js",
-
   "watch": {
     "compile:hbs": {
-      "patterns": ["src/templates"],
+      "patterns": [
+        "src/templates"
+      ],
       "extensions": "hbs, handlebars",
+      "ignore": "",
+      "quiet": false,
+      "legacyWatch": true,
+      "delay": 0,
+      "runOnChangeOnly": false
+    },
+    "concat:js": {
+      "patterns": [
+        "src/js/bundle"
+      ],
+      "extensions": "js",
       "ignore": "",
       "quiet": false,
       "legacyWatch": true,
@@ -15,23 +27,39 @@
       "runOnChangeOnly": false
     }
   },
-
   "scripts": {
     "watch:less": "less-watch-compiler",
     "watch:hbs": "npm-watch compile:hbs",
-    "dev-server": "live-server --ignore=less,templates ./src",
-    "start": "npm-run-all --parallel dev-server watch:less watch:hbs",
+    "watch:js": "npm-watch concat:js",
+
+    "dev-server": "live-server --ignore=less,templates,template_helpers,js/bundle ./src",
+
+    "start": "npm-run-all --parallel dev-server watch:less watch:hbs watch:js",
+
     "test": "stylelint 'src/less/**/*.less'",
+
     "clean:dist": "rm -rf ./dist && mkdir ./dist",
-    "copy:dist": "rsync -av ./src/ ./dist --exclude less/ --exclude templates/",
+
+    "copy:dist": "rsync -av ./src/ ./dist --exclude data.json --exclude less/ --exclude templates/ --exclude template_helpers/ --exclude js/bundle --exclude js/bundle.js",
+
     "clean:bak": "rm -r ./dist/*.bak",
+
     "compile:less": "lessc ./src/less/style.less ./src/css/style.css",
+
+    "compile:hbs": "hbs --helper ./src/template_helpers/*.js --data src/data.json src/templates/*.hbs --partial 'src/templates/partials/*.hbs' --output src/",
+
     "postcss-run": "LIST=`find ./dist/css -type f -name '*.css' | grep -v .min` && postcss $LIST --base ./dist/css --dir ./dist/css --ext min.css --verbose && rm -r $LIST",
-    "babel-run": "babel --verbose ./dist/js --ignore ./dist/js/**/*.min.js --out-dir ./dist/js && cd ./dist/js && renamer --find /'(.min)?(.js)$'/ --replace .min.js '**'",
+
+    "concat:js": "cd ./src/js && node bundle.js",
+
+    "babel-run": "babel --verbose ./dist/js --ignore ./dist/js/**/*.min.js,./dist/vendor --out-dir ./dist/js && cd ./dist/js && renamer --find /'(.min)?(.js)$'/ --replace .min.js '**'",
+
     "html:sed-css": "find ./dist -type f -name '*.html' -exec sed -i'.bak' '/<head>/,/<\\/head>/ s/\\(\\.min\\)\\{0,1\\}\\(\\.css\\)/.min.css/g' {} \\;",
+
     "html:sed-js": "find ./dist -type f -name '*.html' -exec sed -i'.bak' '/<script/,/<\\/script>/ s/\\(\\.min\\)\\{0,1\\}\\(\\.js\\)/.min.js/g' {} \\;",
-    "build": "npm-run-all clean:dist compile:less copy:dist postcss-run babel-run html:sed-css html:sed-js clean:bak",
-    "compile:hbs": "hbs --data src/data.json src/templates/*.hbs --partial 'src/templates/partials/*.hbs' --output src/"
+
+    "build": "npm-run-all clean:dist compile:less concat:js copy:dist postcss-run babel-run html:sed-css html:sed-js clean:bak"
+
   },
   "repository": {
     "type": "git",
@@ -49,10 +77,11 @@
     "@babel/preset-env": "^7.4.2",
     "autoprefixer": "^9.5.0",
     "babel-preset-minify": "^0.5.0",
+    "concat": "^1.0.3",
     "cssnano": "^4.1.10",
     "eslint": "^5.15.3",
     "eslint-config-htmlacademy": "^0.5.2",
-    "handlebars": "^4.1.1",
+    "handlebars": "^4.1.2",
     "hbs-cli": "^1.3.0",
     "less": "^3.9.0",
     "less-watch-compiler": "^1.13.0",
